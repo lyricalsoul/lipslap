@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ditto</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/testing/index.css">
+</head>
+<body class="viewer-page">
+    <div class="sidebar">
+        <h1>ditto preview</h1>
+        <div class="meta">
+            <div><b>Test</b> {{testName}}</div>
+        </div>
+        <div class="actions">
+            <button onclick="location.reload()">reload</button>
+            <button onclick="location.href='/testing'">back to dashboard</button>
+        </div>
+        <h2 class="trace-title">Details</h2>
+        <div class="meta">
+            <div><b>ID</b> <code>{{id}}</code></div>
+            <div><b>Render time</b> <code>{{time}}ms</code></div>
+        </div>
+        <h2 class="trace-title">Trace</h2>
+        {{trace}}
+    </div>
+    <div class="viewer">
+        <img src="/results/{{id}}.{{ext}}" alt="preview" onclick="this.classList.toggle('zoomed')">
+    </div>
+</body>
+</html>

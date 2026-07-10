@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ditto</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/testing/index.css">
+</head>
+<body class="dashboard">
+    <div class="page">
+        <h1>ditto preview dashboard</h1>
+        <ul>
+            {{tests}}
+        </ul>
+        <div class="tip">
+            <b>Tip:</b> add more previews with <code>ditto::preview!("theme", "name", serde_json::json!({ ... }))</code> next to the theme's code.
+        </div>
+    </div>
+</body>
+</html>
