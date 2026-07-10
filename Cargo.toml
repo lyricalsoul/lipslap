@@ -12,7 +12,7 @@ reqwest = { version = "0.13.4", features = ["stream"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
 sha1 = "0.11.0"
-skia-safe = "0.99.0"
+skia-safe = { version = "0.99.0", features = ["binary-cache", "embed-icudtl", "jpeg", "pdf", "svg", "textlayout", "webp", "webp-decode", "webp-encode"], default-features = false }
 tokio = { version = "1.52.3", features = ["full"] }
 tokio-cron-scheduler = "0.15.1"
 warp = { version = "0.4.3", features = ["server"] }
