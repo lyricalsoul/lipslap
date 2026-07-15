@@ -109,6 +109,19 @@ button:hover { background: #263042; border-color: #4b5563; }
     cursor: zoom-in;
     flex: none;
 }
+.coord-badge {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    pointer-events: none;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.75rem;
+    background: rgba(17, 24, 39, 0.9);
+    color: #e5e7eb;
+    border: 1px solid #374151;
+    border-radius: 4px;
+    padding: 0.15rem 0.45rem;
+}
 .viewer img.zoomed {
     max-width: none;
     max-height: none;

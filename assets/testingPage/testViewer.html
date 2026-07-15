@@ -25,7 +25,42 @@
         {{trace}}
     </div>
     <div class="viewer">
-        <img src="/results/{{id}}.{{ext}}" alt="preview" onclick="this.classList.toggle('zoomed')">
+        <img id="preview-img" src="/results/{{id}}.{{ext}}" alt="preview" onclick="this.classList.toggle('zoomed')">
+        <div id="coord-badge" class="coord-badge"></div>
     </div>
+    <script>
+        // cursor coordinates in image-space pixels, so they match the x/y a
+        // theme's draw() call would use, not CSS display pixels.
+        const img = document.getElementById('preview-img');
+        const badge = document.getElementById('coord-badge');
+        img.addEventListener('mousemove', (e) => {
+            const rect = img.getBoundingClientRect();
+            const x = Math.round((e.clientX - rect.left) * (img.naturalWidth / rect.width));
+            const y = Math.round((e.clientY - rect.top) * (img.naturalHeight / rect.height));
+            badge.textContent = `${x}, ${y}`;
+            badge.style.left = `${e.clientX + 14}px`;
+            badge.style.top = `${e.clientY + 14}px`;
+            badge.style.display = 'block';
+        });
+        img.addEventListener('mouseleave', () => badge.style.display = 'none');
+        img.addEventListener('click', () => {
+            if (badge.textContent) navigator.clipboard?.writeText(badge.textContent);
+        });
+
+        // ponytail: dumb poll instead of websocket/SSE live-reload — cargo
+        // watch kills+restarts the whole process on rebuild, so /status
+        // briefly drops; reload once it answers again. Add a push channel if
+        // polling every 1s ever feels laggy.
+        let down = false;
+        setInterval(async () => {
+            try {
+                await fetch('/status', { cache: 'no-store' });
+                if (down) location.reload();
+                down = false;
+            } catch {
+                down = true;
+            }
+        }, 1000);
+    </script>
 </body>
 </html>
