@@ -98,6 +98,31 @@ pub fn resize_cover_jpeg(bytes: &[u8], x: u32, y: u32, high_quality: bool) -> Op
     Some(data.as_bytes().to_vec())
 }
 
+fn is_mp4(url: &str, content_type: Option<&str>) -> bool {
+    content_type.is_some_and(|ct| ct.starts_with("video/"))
+        || url.split(['?', '#']).next().unwrap_or(url).to_lowercase().ends_with(".mp4")
+}
+
+/// Extracts the first frame of an mp4 as PNG bytes by shelling out to ffmpeg.
+async fn extract_first_frame(video: &[u8]) -> anyhow::Result<Vec<u8>> {
+    use std::process::Stdio;
+    use tokio::io::AsyncWriteExt;
+
+    let mut child = tokio::process::Command::new("ffmpeg")
+        .args(["-f", "mp4", "-i", "pipe:0", "-frames:v", "1", "-f", "image2", "-vcodec", "png", "pipe:1"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()?;
+
+    child.stdin.take().unwrap().write_all(video).await?;
+    let output = child.wait_with_output().await?;
+    if !output.status.success() || output.stdout.is_empty() {
+        anyhow::bail!("ffmpeg failed to extract first frame");
+    }
+    Ok(output.stdout)
+}
+
 pub async fn download_image(
     client: &reqwest::Client,
     url: &str,
@@ -109,7 +134,18 @@ pub async fn download_image(
     if !response.status().is_success() {
         anyhow::bail!("failed to download image {url} (status {})", response.status());
     }
+    let content_type = response
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .map(str::to_owned);
     let bytes = response.bytes().await?.to_vec();
+
+    let bytes = if is_mp4(url, content_type.as_deref()) {
+        extract_first_frame(&bytes).await?
+    } else {
+        bytes
+    };
 
     let resized = resize_cover_jpeg(&bytes, x, y, high_quality)
         .ok_or_else(|| anyhow::anyhow!("failed to decode/resize image {url}"))?;
