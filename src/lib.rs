@@ -15,7 +15,7 @@ pub mod types;
 pub use inventory;
 
 pub use generator::OutputFormat;
-pub use overlay::apply_overlays;
+pub use overlay::{apply_overlays, OverlaySpec};
 pub use server::{serve, ServeOptions};
 pub use template::{Draw, Registry, Template};
 pub use types::GenerateData;

@@ -198,6 +198,59 @@ pub fn readable_number(n: f64) -> String {
     }
 }
 
+pub struct GridCell {
+    pub x: f32,
+    pub y: f32,
+    pub w: f32,
+    pub h: f32,
+}
+
+pub fn grid_layout(count: usize, area: Rect, aspect_ratio: f32, gap: f32) -> Vec<GridCell> {
+    if count == 0 {
+        return Vec::new();
+    }
+
+    let mut best: Option<(usize, usize, f32, f32)> = None;
+    for cols in 1..=count {
+        let rows = count.div_ceil(cols);
+        let mut cell_w = (area.width() - (cols as f32 - 1.0) * gap) / cols as f32;
+        let mut cell_h = cell_w / aspect_ratio;
+        if rows as f32 * cell_h + (rows as f32 - 1.0) * gap > area.height() {
+            cell_h = (area.height() - (rows as f32 - 1.0) * gap) / rows as f32;
+            cell_w = cell_h * aspect_ratio;
+        }
+        if cell_w <= 0.0 || cell_h <= 0.0 {
+            continue;
+        }
+        let is_better = match best {
+            None => true,
+            Some((_, _, best_w, _)) => cell_w > best_w,
+        };
+        if is_better {
+            best = Some((cols, rows, cell_w, cell_h));
+        }
+    }
+    let Some((cols, rows, cell_w, cell_h)) = best else {
+        return Vec::new();
+    };
+
+    let grid_h = rows as f32 * cell_h + (rows as f32 - 1.0) * gap;
+    let top = area.top + (area.height() - grid_h) / 2.0;
+
+    let mut cells = Vec::with_capacity(count);
+    for row in 0..rows {
+        let items_in_row = if row == rows - 1 { count - row * cols } else { cols };
+        let row_w = items_in_row as f32 * cell_w + (items_in_row as f32 - 1.0) * gap;
+        let left = area.left + (area.width() - row_w) / 2.0;
+        let y = top + row as f32 * (cell_h + gap);
+        for col in 0..items_in_row {
+            let x = left + col as f32 * (cell_w + gap);
+            cells.push(GridCell { x, y, w: cell_w, h: cell_h });
+        }
+    }
+    cells
+}
+
 pub fn draw_text_wrapped(canvas: &Canvas, paint: &Paint, style: TextStyle, text: &str, pos: Point, max_width: f32, line_height: f32) {
     let font = crate::fonts::font(style.family, style.size);
     let (x, mut y) = (pos.x, pos.y);

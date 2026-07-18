@@ -1,6 +1,7 @@
 //! Debug-only preview registry, in the spirit of SwiftUI/Compose `#Preview`.
 //! Themes call `ditto::preview!` next to their own code to register a
 //! sample payload; nothing here exists in a release build.
+use crate::overlay::OverlaySpec;
 use crate::template::Registry;
 use crate::types::GenerateData;
 use std::convert::Infallible;
@@ -11,22 +12,31 @@ pub struct Preview {
     pub theme: &'static str,
     pub name: &'static str,
     pub data: fn() -> serde_json::Value,
+    pub overlays: fn() -> Vec<OverlaySpec>,
 }
 
 inventory::collect!(Preview);
 
 /// Registers a preview under `theme` with a human-readable `name`. `data` is
 /// the theme's own JSON payload (what normally arrives as `GenerateData.data`).
-/// Compiled out entirely in release builds.
+/// An optional trailing `overlays` expression (a `Vec<OverlaySpec>`) applies
+/// overlays to the preview the same way a real request's `overlays` field
+/// would.
 #[macro_export]
 macro_rules! preview {
-    ($theme:expr, $name:expr, $data:expr) => {
+    ($theme:expr, $name:expr, $data:expr $(, $overlays:expr)?) => {
         #[cfg(debug_assertions)]
         $crate::inventory::submit! {
             $crate::preview::Preview {
                 theme: $theme,
                 name: $name,
                 data: || $data,
+                overlays: || {
+                    #[allow(unused_mut)]
+                    let mut overlays: Vec<$crate::overlay::OverlaySpec> = Vec::new();
+                    $(overlays = $overlays;)?
+                    overlays
+                },
             }
         }
     };
@@ -118,7 +128,7 @@ pub fn routes(
             let data = GenerateData {
                 id: None,
                 theme: preview.theme.to_string(),
-                overlays: Vec::new(),
+                overlays: (preview.overlays)(),
                 data: (preview.data)(),
             };
 

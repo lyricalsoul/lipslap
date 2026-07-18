@@ -190,6 +190,24 @@ pub async fn load_image_from_assets(path: &str, x: u32, y: u32) -> anyhow::Resul
         .ok_or_else(|| anyhow::anyhow!("failed to decode asset {path}"))
 }
 
+pub fn average_luminance(image: &skia_safe::Image, x: i32, y: i32, w: i32, h: i32) -> Option<f32> {
+    if w <= 0 || h <= 0 {
+        return None;
+    }
+    let info = ImageInfo::new(ISize::new(w, h), ColorType::RGBA8888, AlphaType::Unpremul, None);
+    let row_bytes = w as usize * 4;
+    let mut pixels = vec![0u8; row_bytes * h as usize];
+    if !image.read_pixels(&info, &mut pixels, row_bytes, (x, y), skia_safe::image::CachingHint::Disallow) {
+        return None;
+    }
+    let mut total = 0f64;
+    let count = (w * h) as f64;
+    for px in pixels.chunks_exact(4) {
+        total += px[0] as f64 * 0.299 + px[1] as f64 * 0.587 + px[2] as f64 * 0.114;
+    }
+    Some((total / count) as f32)
+}
+
 pub async fn clear_cache() -> std::io::Result<()> {
     remove_older_than(&cache_dir(), 2.0).await?;
     remove_older_than(&generation_cache_dir(), 0.0).await?;
